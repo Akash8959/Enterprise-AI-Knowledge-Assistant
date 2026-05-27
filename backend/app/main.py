@@ -1,13 +1,20 @@
 from fastapi import FastAPI
+from app.core.config import settings
 
 app = FastAPI(
-    title="Enterprise AI Knowledge Assistant",
-    version="1.0.0"
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION
 )
 
 @app.get("/")
 def root():
     return {
         "status": "success",
-        "message": "Enterprise AI Knowledge Assistant API Running"
+        "message": f"{settings.APP_NAME} API Running"
+    }
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "healthy"
     }
