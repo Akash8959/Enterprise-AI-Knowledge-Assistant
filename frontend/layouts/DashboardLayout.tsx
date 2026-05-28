@@ -1,4 +1,5 @@
 import ThemeToggle from "@/components/shared/ThemeToggle";
+import Link from "next/link";
 
 export default function DashboardLayout({
   children,
@@ -17,27 +18,42 @@ export default function DashboardLayout({
 
         <nav className="mt-10 space-y-4">
 
-          <p className="text-foreground/70 hover:text-foreground cursor-pointer transition">
-            Dashboard
-          </p>
+  <Link
+    href="/dashboard"
+    className="block text-foreground/70 hover:text-foreground transition"
+  >
+    Dashboard
+  </Link>
 
-          <p className="text-foreground/70 hover:text-foreground cursor-pointer transition">
-            AI Chat
-          </p>
+  <Link
+    href="/chat"
+    className="block text-foreground/70 hover:text-foreground transition"
+  >
+    AI Chat
+  </Link>
 
-          <p className="text-foreground/70 hover:text-foreground cursor-pointer transition">
-            Documents
-          </p>
+  <Link
+    href="/documents"
+    className="block text-foreground/70 hover:text-foreground transition"
+  >
+    Documents
+  </Link>
 
-          <p className="text-foreground/70 hover:text-foreground cursor-pointer transition">
-            Analytics
-          </p>
+  <Link
+    href="/analytics"
+    className="block text-foreground/70 hover:text-foreground transition"
+  >
+    Analytics
+  </Link>
 
-          <p className="text-foreground/70 hover:text-foreground cursor-pointer transition">
-            Settings
-          </p>
+  <Link
+    href="/settings"
+    className="block text-foreground/70 hover:text-foreground transition"
+  >
+    Settings
+  </Link>
 
-        </nav>
+</nav>
       </aside>
 
       {/* Main Section */}
