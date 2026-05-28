@@ -3,7 +3,6 @@ import AuthLayout from "@/layouts/AuthLayout";
 export default function LoginPage() {
   return (
     <AuthLayout
-      title="Login"
       subtitle="Sign in to your enterprise workspace"
     >
       <form className="space-y-5">

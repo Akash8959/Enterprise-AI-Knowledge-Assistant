@@ -3,7 +3,6 @@ import AuthLayout from "@/layouts/AuthLayout";
 export default function SignupPage() {
   return (
     <AuthLayout
-      title="Signup"
       subtitle="Create your enterprise account"
     >
       <form className="space-y-5">

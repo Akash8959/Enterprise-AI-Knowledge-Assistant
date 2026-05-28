@@ -3,7 +3,6 @@ import AuthLayout from "@/layouts/AuthLayout";
 export default function ForgotPasswordPage() {
   return (
     <AuthLayout
-      title="Forgot Password"
       subtitle="Reset your account password"
     >
       <form className="space-y-5">
