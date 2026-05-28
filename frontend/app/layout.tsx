@@ -1,6 +1,9 @@
 import "./globals.css";
 
 import ThemeProvider from "@/components/providers/ThemeProvider";
+import { AuthProvider } from "@/context/AuthContext";
+
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
   title: "Enterprise AI Knowledge Assistant",
@@ -19,7 +22,11 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning>
         <ThemeProvider>
-          {children}
+          <AuthProvider>
+            <Toaster position="top-right" />
+
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -1,22 +1,94 @@
+"use client";
+
+import { useState } from "react";
+
 import AuthLayout from "@/layouts/AuthLayout";
 
+import { useForm } from "react-hook-form";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { signupSchema } from "@/lib/validations/auth";
+
+import { z } from "zod";
+
+import Input from "@/components/ui/Input";
+
+import api from "@/services/api";
+
+import toast from "react-hot-toast";
+
+import { useRouter } from "next/navigation";
+
+type SignupFormData = z.infer<typeof signupSchema>;
+
 export default function SignupPage() {
+
+  const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+  });
+
+  const onSubmit = async (data: SignupFormData) => {
+    try {
+      setLoading(true);
+
+      await api.post(
+        "/auth/signup",
+        data
+      );
+
+      toast.success(
+        "Account created successfully"
+      );
+
+      router.push("/login");
+
+    } catch (error) {
+
+      toast.error(
+        "Signup failed"
+      );
+
+      console.log(error);
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthLayout
       subtitle="Create your enterprise account"
     >
-      <form className="space-y-5">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-5"
+      >
 
         <div>
           <label className="block text-sm mb-2 text-foreground/70">
             Full Name
           </label>
 
-          <input
+          <Input
             type="text"
             placeholder="John Doe"
-            className="w-full rounded-xl border border-[var(--border)] bg-background px-4 py-3 outline-none focus:border-indigo-500"
+            {...register("full_name")}
           />
+
+          {errors.full_name && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.full_name.message}
+            </p>
+          )}
         </div>
 
         <div>
@@ -24,11 +96,17 @@ export default function SignupPage() {
             Email
           </label>
 
-          <input
+          <Input
             type="email"
             placeholder="you@company.com"
-            className="w-full rounded-xl border border-[var(--border)] bg-background px-4 py-3 outline-none focus:border-indigo-500"
+            {...register("email")}
           />
+
+          {errors.email && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.email.message}
+            </p>
+          )}
         </div>
 
         <div>
@@ -36,18 +114,27 @@ export default function SignupPage() {
             Password
           </label>
 
-          <input
+          <Input
             type="password"
             placeholder="Create password"
-            className="w-full rounded-xl border border-[var(--border)] bg-background px-4 py-3 outline-none focus:border-indigo-500"
+            {...register("password")}
           />
+
+          {errors.password && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         <button
           type="submit"
-          className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 py-3 font-semibold hover:opacity-90 transition"
+          disabled={loading}
+          className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 py-3 font-semibold hover:opacity-90 transition disabled:opacity-50"
         >
-          Create Account
+          {loading
+            ? "Creating Account..."
+            : "Create Account"}
         </button>
 
       </form>
