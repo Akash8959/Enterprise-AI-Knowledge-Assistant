@@ -1,18 +1,15 @@
 "use client";
 
 import DashboardLayout from "@/layouts/DashboardLayout";
-import ChatBubble from "@/components/chat/ChatBubble";
+import ChatBubble, { SourceItem } from "@/components/chat/ChatBubble";
 import ConversationItem from "@/components/chat/ConversationItem";
-
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
+  sources?: SourceItem[];
 };
 
 export default function ChatPage() {
@@ -20,16 +17,14 @@ export default function ChatPage() {
     {
       role: "assistant",
       content:
-        "Hello 👋 I am your Enterprise AI Knowledge Assistant.",
+        "Hello 👋 I am your Enterprise AI Knowledge Assistant.\n\nAsk me any question about your uploaded company policies, engineering docs, HR handbooks, or financial reports!",
     },
   ]);
 
   const [input, setInput] = useState("");
-
+  const [department, setDepartment] = useState("All");
   const [isTyping, setIsTyping] = useState(false);
-
-  const messagesEndRef =
-    useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -37,185 +32,220 @@ export default function ChatPage() {
     });
   }, [messages, isTyping]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    const userQuery = input.trim();
+    if (!userQuery || isTyping) return;
 
-    const newMessage: Message = {
+    // Add User Message
+    const userMessage: Message = {
       role: "user",
-      content: input,
+      content: userQuery,
     };
 
-    setMessages((prev) => [
-      ...prev,
-      newMessage,
-    ]);
-
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
-
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      // Call FastAPI RAG Endpoint
+      const response = await fetch(`${API_BASE_URL}/api/v1/rag`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: userQuery,
+          department: department !== "All" ? department : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`RAG Server responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Add AI Response with Citations
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: data.answer || "I retrieved knowledge chunks but generated an empty answer.",
+        sources: data.sources || [],
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.error("RAG Query error:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            "AI streaming and FastAPI backend integration will be connected in upcoming phases.\n\n```python\nprint('Enterprise AI Assistant')\n```",
+          content: `⚠️ **Connection Error**: Could not retrieve RAG context from backend.\n\nDetails: ${
+            error.message || "Ensure FastAPI backend server is running at " + API_BASE_URL
+          }`,
         },
       ]);
-
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
+  };
+
+  const handleNewChat = () => {
+    setMessages([
+      {
+        role: "assistant",
+        content:
+          "New conversation started. Ask me anything about your enterprise documents!",
+      },
+    ]);
   };
 
   return (
-    <DashboardLayout>
-      <div className="flex h-[calc(100vh-100px)] gap-6">
+    <div className="flex h-[calc(100vh-140px)] sm:h-[calc(100vh-120px)] gap-6 max-w-7xl mx-auto min-w-0">
+      {/* SIDEBAR (Desktop Only lg+) */}
+      <aside className="w-72 border border-[var(--border)] bg-[var(--card)] rounded-2xl p-4 hidden lg:flex flex-col justify-between shrink-0 shadow-xs">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-foreground">Conversations</h2>
+            <button
+              onClick={handleNewChat}
+              className="px-3 py-1.5 rounded-xl bg-indigo-600 text-xs font-semibold text-white hover:bg-indigo-700 transition cursor-pointer"
+            >
+              + New Chat
+            </button>
+          </div>
 
-        {/* Sidebar */}
-        <aside className="w-80 border border-[var(--border)] bg-[var(--card)] rounded-2xl p-4 hidden lg:block">
+          {/* Department Filter for Desktop */}
+          <div className="mb-4 p-3 rounded-xl bg-foreground/5 border border-[var(--border)]">
+            <label className="text-[11px] font-semibold text-foreground/70 block mb-1.5">
+              RAG Search Scope:
+            </label>
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="w-full text-xs rounded-lg border border-[var(--border)] bg-[var(--card)] text-foreground px-2.5 py-1.5 outline-none focus:border-indigo-500 font-medium"
+            >
+              <option value="All">🌐 All Departments</option>
+              <option value="General">📁 General Knowledge</option>
+              <option value="Engineering">⚙️ Engineering</option>
+              <option value="HR">👥 Human Resources</option>
+              <option value="Finance">💰 Finance</option>
+              <option value="Legal">⚖️ Legal</option>
+            </select>
+          </div>
 
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="space-y-1.5">
+            <ConversationItem title="Enterprise Knowledge Assistant" active />
+            <ConversationItem title="Document RAG Retrieval" />
+            <ConversationItem title="Department Permissions Test" />
+          </div>
+        </div>
 
-            <h2 className="text-xl font-semibold">
-              Conversations
+        <div className="text-[11px] text-foreground/40 text-center pt-3 border-t border-[var(--border)]">
+          Powered by ChromaDB & SentenceTransformers
+        </div>
+      </aside>
+
+      {/* MAIN CHAT INTERFACE (Responsive for Desktop & Mobile) */}
+      <div className="flex-1 flex flex-col border border-[var(--border)] bg-[var(--card)] rounded-2xl overflow-hidden shadow-xs min-w-0">
+        {/* Top Bar inside Chat */}
+        <div className="border-b border-[var(--border)] px-4 py-3 sm:px-6 sm:py-4 flex flex-wrap items-center justify-between gap-2 bg-[var(--card)] shrink-0">
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
+              <span>🤖</span> Enterprise AI Assistant
             </h2>
+            <p className="text-[11px] text-foreground/60 mt-0.5">
+              Scope:{" "}
+              <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                {department}
+              </span>
+            </p>
+          </div>
 
-            <button className="px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm text-white hover:opacity-90 transition">
-              New Chat
+          {/* Mobile Department Selector Dropdown */}
+          <div className="flex items-center gap-2">
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="lg:hidden text-xs rounded-lg border border-[var(--border)] bg-[var(--card)] text-foreground px-2 py-1 outline-none font-medium"
+            >
+              <option value="All">🌐 All Scope</option>
+              <option value="General">📁 General</option>
+              <option value="Engineering">⚙️ Engineering</option>
+              <option value="HR">👥 HR</option>
+              <option value="Finance">💰 Finance</option>
+              <option value="Legal">⚖️ Legal</option>
+            </select>
+
+            <button
+              onClick={handleNewChat}
+              className="lg:hidden text-xs px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold"
+            >
+              New
             </button>
 
-          </div>
-
-          {/* Conversation List */}
-          <div className="space-y-3">
-
-            <ConversationItem
-              title="Enterprise AI Setup"
-              active
-            />
-
-            <ConversationItem
-              title="RAG Architecture Discussion"
-            />
-
-            <ConversationItem
-              title="Department Access Control"
-            />
-
-          </div>
-
-        </aside>
-
-        {/* Main Chat */}
-        <div className="flex-1 flex flex-col border border-[var(--border)] bg-[var(--card)] rounded-2xl overflow-hidden">
-
-          {/* Chat Header */}
-          <div className="border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
-
-            <div>
-              <h2 className="text-xl font-semibold">
-                Enterprise AI Assistant
-              </h2>
-
-              <p className="text-sm text-foreground/60 mt-1">
-                Secure enterprise knowledge conversation
-              </p>
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Active
             </div>
-
-            <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-
           </div>
+        </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Messages Feed */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+          {messages.map((message, index) => (
+            <ChatBubble
+              key={index}
+              role={message.role}
+              content={message.content}
+              sources={message.sources}
+            />
+          ))}
 
-            {/* Empty State */}
-            {messages.length === 0 && (
-              <div className="h-full flex items-center justify-center">
-
-                <div className="text-center">
-
-                  <h2 className="text-3xl font-bold mb-3">
-                    Start a Conversation
-                  </h2>
-
-                  <p className="text-foreground/60">
-                    Ask questions about enterprise knowledge and documents.
-                  </p>
-
+          {/* Typing Indicator */}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl px-4 py-3 flex items-center gap-2.5 text-xs font-medium text-foreground/70">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" />
+                  <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.4s]" />
                 </div>
-
+                <span className="truncate">Searching ChromaDB & generating response...</span>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Chat Messages */}
-            {messages.map((message, index) => (
-              <ChatBubble
-                key={index}
-                role={message.role}
-                content={message.content}
-              />
-            ))}
+          <div ref={messagesEndRef} />
+        </div>
 
-            {/* Typing Animation */}
-            {isTyping && (
-              <div className="flex justify-start">
-
-                <div className="bg-background border border-[var(--border)] rounded-2xl px-5 py-4 flex gap-2">
-
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" />
-
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce delay-150" />
-
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce delay-300" />
-
-                </div>
-
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-
-          </div>
-
-          {/* Input Area */}
-          <div className="border-t border-[var(--border)] p-4 flex gap-4">
-
-            {/* Upload Button */}
-            <button className="px-4 rounded-xl border border-[var(--border)] hover:border-indigo-500 transition">
-              +
-            </button>
-
-            {/* Chat Input */}
+        {/* Input Bar */}
+        <div className="border-t border-[var(--border)] p-2.5 sm:p-4 bg-[var(--card)] shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <input
               type="text"
-              placeholder="Ask your enterprise AI assistant..."
+              placeholder="Ask a question about your documents..."
               value={input}
-              onChange={(e) =>
-                setInput(e.target.value)
-              }
+              disabled={isTyping}
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
                   handleSend();
                 }
               }}
-              className="flex-1 rounded-xl border border-[var(--border)] bg-background px-4 py-3 outline-none focus:border-indigo-500"
+              className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-4 py-2.5 text-xs sm:text-sm text-foreground outline-none focus:border-indigo-500 transition min-h-[44px]"
             />
 
-            {/* Send Button */}
             <button
               onClick={handleSend}
-              className="px-6 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold hover:opacity-90 transition"
+              disabled={isTyping || !input.trim()}
+              className="rounded-xl bg-indigo-600 px-6 py-2.5 font-semibold text-xs sm:text-sm text-white hover:bg-indigo-700 transition disabled:opacity-50 min-h-[44px] shrink-0 cursor-pointer shadow-xs"
             >
               Send
             </button>
-
           </div>
-
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

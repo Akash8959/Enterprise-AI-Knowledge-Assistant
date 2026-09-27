@@ -10,3 +10,5 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     full_name = Column(String)
     hashed_password = Column(String)
+    role = Column(String, default="user")
+    department = Column(String, default="General")

@@ -1,11 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException
+
+from fastapi.security import OAuth2PasswordRequestForm
+
 from sqlalchemy.orm import Session
 
 from app.core.security import verify_access_token
+
 from app.api.deps import get_current_user
+
 from app.db.database import get_db
+
 from app.models.user import User
+
 from app.schemas.user import UserCreate, UserResponse
+
 from app.core.security import (
     hash_password,
     verify_password,
@@ -38,11 +46,15 @@ def signup(
     new_user = User(
         email=user.email,
         full_name=user.full_name,
-        hashed_password=hashed_pw
+        hashed_password=hashed_pw,
+        department=user.department or "General",
+        role=user.role or "user"
     )
 
     db.add(new_user)
+
     db.commit()
+
     db.refresh(new_user)
 
     return new_user
@@ -50,11 +62,11 @@ def signup(
 
 @router.post("/login")
 def login(
-    user: UserCreate,
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
     db_user = db.query(User).filter(
-        User.email == user.email
+        User.email == form_data.username
     ).first()
 
     if not db_user:
@@ -64,7 +76,7 @@ def login(
         )
 
     valid_password = verify_password(
-        user.password,
+        form_data.password,
         db_user.hashed_password
     )
 
@@ -80,7 +92,14 @@ def login(
 
     return {
         "access_token": access_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": {
+            "id": db_user.id,
+            "email": db_user.email,
+            "full_name": db_user.full_name,
+            "department": getattr(db_user, "department", "General") or "General",
+            "role": getattr(db_user, "role", "user") or "user"
+        }
     }
 
 
@@ -91,8 +110,11 @@ def get_me(
     return {
         "id": current_user.id,
         "email": current_user.email,
-        "full_name": current_user.full_name
+        "full_name": current_user.full_name,
+        "department": getattr(current_user, "department", "General") or "General",
+        "role": getattr(current_user, "role", "user") or "user"
     }
+
 
 @router.get("/verify-token/{token}")
 def verify_token(token: str):

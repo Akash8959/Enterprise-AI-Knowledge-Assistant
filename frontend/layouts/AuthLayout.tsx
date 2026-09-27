@@ -1,5 +1,6 @@
-export default function AuthLayout({
+import ThemeToggle from "@/components/shared/ThemeToggle";
 
+export default function AuthLayout({
   subtitle,
   children,
 }: {
@@ -7,24 +8,28 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-4 transition-colors duration-300">
-      
-      <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--card)] backdrop-blur-xl p-8 shadow-2xl transition-colors duration-300">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col items-center justify-center p-4 sm:p-6 transition-colors duration-200 relative">
+      {/* Theme Toggle Top Right */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
+        <ThemeToggle />
+      </div>
 
+      <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--card)] text-foreground p-6 sm:p-8 shadow-xl transition-colors duration-200">
         <div className="text-center mb-8">
-          
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-500 bg-clip-text text-transparent">
-            E-AI KA
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 text-white font-bold text-xl mb-3 shadow-sm">
+            E
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            Enterprise AI Assistant
           </h1>
 
-          <p className="text-foreground/70 mt-3">
+          <p className="text-sm text-foreground/60 mt-2 font-medium">
             {subtitle}
           </p>
-
         </div>
 
         {children}
-
       </div>
     </main>
   );
