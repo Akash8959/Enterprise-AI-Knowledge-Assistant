@@ -24,3 +24,4 @@ sentence-transformers==5.1.2
 chromadb==0.6.3
 python-docx==1.2.0
 PyMuPDF==1.26.5
+python-multipart==0.0.20
