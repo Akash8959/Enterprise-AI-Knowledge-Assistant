@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api";
 
 interface Props {
   id: number;
@@ -33,6 +33,7 @@ export default function DocumentCard({
       setIsDeleting(true);
       const response = await fetch(`${API_BASE_URL}/api/v1/upload/document/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {

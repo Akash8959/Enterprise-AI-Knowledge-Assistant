@@ -1,0 +1,227 @@
+{
+  "info": {
+    "_postman_id": "d382939a-c898-4b14-94f9-6e82e7be8a37",
+    "name": "Enterprise AI Knowledge Assistant - QA API",
+    "description": "Requests for the implemented FastAPI routes. Use only a local isolated QA backend and synthetic data. No credentials are stored in this collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Service",
+      "item": [
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/"
+          }
+        },
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{qa_email}}\",\n  \"full_name\": \"QA Test User\",\n  \"password\": \"{{qa_password}}\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/auth/signup"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('access_token', body.access_token);",
+                  "  if (body.user && body.user.id !== undefined) {",
+                  "    pm.environment.set('document_owner_user_id', body.user.id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{qa_email}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{qa_password}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{base_url}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Current User",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/auth/me"
+          }
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/auth/verify-token/{{access_token}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "Upload Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.document && body.document.id !== undefined) {",
+                  "    pm.environment.set('document_id', body.document.id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{base_url}}/api/v1/upload/document"
+          }
+        },
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/upload/documents?department={{department}}"
+          }
+        },
+        {
+          "name": "Delete QA Document",
+          "request": {
+            "description": "Destructive for the selected document: removes its file and database record and requests vector deletion. Use only a disposable document uploaded to the isolated local QA backend.",
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/upload/document/{{document_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search and RAG",
+      "item": [
+        {
+          "name": "Semantic Search",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/search/?query={{query}}&department={{department}}"
+          }
+        },
+        {
+          "name": "RAG Chat - POST",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"{{query}}\",\n  \"department\": \"{{department}}\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/rag/"
+          }
+        },
+        {
+          "name": "RAG Chat - GET",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/rag/?query={{query}}&department={{department}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/stats/summary"
+          }
+        }
+      ]
+    }
+  ]
+}

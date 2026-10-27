@@ -47,8 +47,8 @@ def signup(
         email=user.email,
         full_name=user.full_name,
         hashed_password=hashed_pw,
-        department=user.department or "General",
-        role=user.role or "user"
+        department="General",
+        role="user"
     )
 
     db.add(new_user)
