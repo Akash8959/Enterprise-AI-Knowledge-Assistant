@@ -1,0 +1,56 @@
+{
+  "id": "cb27db3d-5508-40f0-a094-a9e94ee08d68",
+  "name": "Enterprise AI Knowledge Assistant - Local QA Template",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "qa_email",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "qa_password",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "department",
+      "value": "General",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "query",
+      "value": "Enter a question that matches synthetic QA document content",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "document_owner_user_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_using": "Postman/QA template"
+}

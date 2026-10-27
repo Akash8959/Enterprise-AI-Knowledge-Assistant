@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import UploadZone from "@/components/upload/UploadZone";
 import DocumentCard from "@/components/documents/DocumentCard";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api";
 
 interface DocumentItem {
   id: number;
@@ -16,18 +16,15 @@ interface DocumentItem {
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
-  const [departmentFilter, setDepartmentFilter] = useState("All");
   const [loading, setLoading] = useState(true);
 
-  const fetchDocuments = async (dept: string = departmentFilter) => {
+  const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
-      const url =
-        dept && dept !== "All"
-          ? `${API_BASE_URL}/api/v1/upload/documents?department=${encodeURIComponent(dept)}`
-          : `${API_BASE_URL}/api/v1/upload/documents`;
-
-      const response = await fetch(url);
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/upload/documents`,
+        { headers: getAuthHeaders() }
+      );
       if (response.ok) {
         const data = await response.json();
         setDocuments(data);
@@ -37,15 +34,15 @@ export default function DocumentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleDelete = (id: number) => {
     setDocuments((prev) => prev.filter((doc) => doc.id !== id));
   };
 
   useEffect(() => {
-    fetchDocuments(departmentFilter);
-  }, [departmentFilter]);
+    fetchDocuments();
+  }, [fetchDocuments]);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -60,7 +57,7 @@ export default function DocumentsPage() {
       {/* Upload Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground">Upload Knowledge File</h2>
-        <UploadZone onUploadSuccess={() => fetchDocuments(departmentFilter)} />
+        <UploadZone onUploadSuccess={fetchDocuments} />
       </div>
 
       {/* Document Library Section */}
@@ -73,22 +70,6 @@ export default function DocumentsPage() {
             </p>
           </div>
 
-          {/* Department Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-foreground/70">Filter by Department:</span>
-            <select
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="text-xs rounded-xl border border-[var(--border)] bg-background px-3 py-2 outline-none focus:border-indigo-500 shadow-sm"
-            >
-              <option value="All">All Departments</option>
-              <option value="General">General</option>
-              <option value="Engineering">Engineering</option>
-              <option value="HR">Human Resources</option>
-              <option value="Finance">Finance</option>
-              <option value="Legal">Legal</option>
-            </select>
-          </div>
         </div>
 
         {/* Loading / Grid / Empty State */}
@@ -101,9 +82,7 @@ export default function DocumentsPage() {
             <div className="text-4xl mb-3">📭</div>
             <h3 className="text-lg font-semibold text-foreground">No documents found</h3>
             <p className="text-sm text-foreground/60 mt-1">
-              {departmentFilter !== "All"
-                ? `No documents found in the '${departmentFilter}' department.`
-                : "Upload your first PDF, TXT, or DOCX document above to enable AI RAG context."}
+              Upload your first PDF, TXT, or DOCX document above to enable AI RAG context.
             </p>
           </div>
         ) : (

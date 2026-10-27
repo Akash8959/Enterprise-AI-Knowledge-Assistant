@@ -72,14 +72,12 @@ def search_similar_chunks(
 ) -> Dict[str, Any]:
     query_embedding = create_embedding(query)
     
-    where_filter = None
-    if department and department not in ["All", "Admin", "*"]:
-        where_filter = {"department": department}
+    where_filter = {"department": department or "General"}
 
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=top_k,
-        where=where_filter if where_filter else None
+        where=where_filter
     )
 
     return results

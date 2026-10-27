@@ -4,7 +4,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import ChatBubble, { SourceItem } from "@/components/chat/ChatBubble";
 import ConversationItem from "@/components/chat/ConversationItem";
 import { useEffect, useRef, useState } from "react";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api";
 
 type Message = {
   role: "user" | "assistant";
@@ -22,7 +22,6 @@ export default function ChatPage() {
   ]);
 
   const [input, setInput] = useState("");
-  const [department, setDepartment] = useState("All");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -52,10 +51,10 @@ export default function ChatPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           query: userQuery,
-          department: department !== "All" ? department : undefined,
         }),
       });
 
@@ -114,25 +113,6 @@ export default function ChatPage() {
             </button>
           </div>
 
-          {/* Department Filter for Desktop */}
-          <div className="mb-4 p-3 rounded-xl bg-foreground/5 border border-[var(--border)]">
-            <label className="text-[11px] font-semibold text-foreground/70 block mb-1.5">
-              RAG Search Scope:
-            </label>
-            <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="w-full text-xs rounded-lg border border-[var(--border)] bg-[var(--card)] text-foreground px-2.5 py-1.5 outline-none focus:border-indigo-500 font-medium"
-            >
-              <option value="All">🌐 All Departments</option>
-              <option value="General">📁 General Knowledge</option>
-              <option value="Engineering">⚙️ Engineering</option>
-              <option value="HR">👥 Human Resources</option>
-              <option value="Finance">💰 Finance</option>
-              <option value="Legal">⚖️ Legal</option>
-            </select>
-          </div>
-
           <div className="space-y-1.5">
             <ConversationItem title="Enterprise Knowledge Assistant" active />
             <ConversationItem title="Document RAG Retrieval" />
@@ -154,28 +134,11 @@ export default function ChatPage() {
               <span>🤖</span> Enterprise AI Assistant
             </h2>
             <p className="text-[11px] text-foreground/60 mt-0.5">
-              Scope:{" "}
-              <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                {department}
-              </span>
+              Responses are limited to your assigned department.
             </p>
           </div>
 
-          {/* Mobile Department Selector Dropdown */}
           <div className="flex items-center gap-2">
-            <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="lg:hidden text-xs rounded-lg border border-[var(--border)] bg-[var(--card)] text-foreground px-2 py-1 outline-none font-medium"
-            >
-              <option value="All">🌐 All Scope</option>
-              <option value="General">📁 General</option>
-              <option value="Engineering">⚙️ Engineering</option>
-              <option value="HR">👥 HR</option>
-              <option value="Finance">💰 Finance</option>
-              <option value="Legal">⚖️ Legal</option>
-            </select>
-
             <button
               onClick={handleNewChat}
               className="lg:hidden text-xs px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold"

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -34,3 +36,16 @@ def get_current_user(
         )
 
     return user
+
+
+def get_authorized_department(
+    current_user: User,
+    requested_department: Optional[str] = None,
+) -> str:
+    department = current_user.department or "General"
+    if requested_department is not None and requested_department != department:
+        raise HTTPException(
+            status_code=403,
+            detail="Access to the requested department is forbidden",
+        )
+    return department

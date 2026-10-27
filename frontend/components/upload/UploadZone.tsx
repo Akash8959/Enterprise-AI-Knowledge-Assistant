@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api";
 
 interface Props {
   onUploadSuccess?: () => void;
@@ -10,7 +10,6 @@ interface Props {
 
 export default function UploadZone({ onUploadSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null);
-  const [department, setDepartment] = useState("General");
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -30,10 +29,10 @@ export default function UploadZone({ onUploadSuccess }: Props) {
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("department", department);
 
       const response = await fetch(`${API_BASE_URL}/api/v1/upload/document`, {
         method: "POST",
+        headers: getAuthHeaders(),
         body: formData,
       });
 
@@ -85,22 +84,6 @@ export default function UploadZone({ onUploadSuccess }: Props) {
         <p className="text-sm text-foreground/60 mt-1">
           Supports <span className="font-semibold text-indigo-500">PDF, TXT, DOCX</span> (Up to 25MB)
         </p>
-      </div>
-
-      {/* Department Selector */}
-      <div className="mt-4 flex items-center justify-center gap-3 max-w-xs mx-auto">
-        <label className="text-xs font-semibold text-foreground/70">Department:</label>
-        <select
-          value={department}
-          onChange={(e) => setDepartment(e.target.value)}
-          className="text-xs rounded-lg border border-[var(--border)] bg-background px-3 py-1.5 outline-none focus:border-indigo-500"
-        >
-          <option value="General">General Knowledge</option>
-          <option value="Engineering">Engineering</option>
-          <option value="HR">Human Resources</option>
-          <option value="Finance">Finance</option>
-          <option value="Legal">Legal</option>
-        </select>
       </div>
 
       {/* File Preview & Upload Action */}
